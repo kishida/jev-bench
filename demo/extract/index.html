@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>条件に合う箇所を探す</title>
+<style>
+  :root { --bg:#f7f7f5; --panel:#fff; --text:#1d1d1b; --muted:#6b6b66; --border:#e2e1dc;
+          --accent:#2f6fdb; --soft:#dbe6fa; --hit:#eb6834; --danger:#b3261e;
+          --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --panel:#1f1f1d; --text:#ecebe6; --muted:#9a9993;
+          --border:#34332f; --accent:#7aa7f5; --soft:#24324b; --hit:#d95926; --danger:#f28b82; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.7 system-ui,-apple-system,"Segoe UI","Hiragino Sans",sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:24px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  p.sub { color:var(--muted); font-size:14px; margin:0 0 18px; }
+  section { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 10px; }
+  label { display:block; font-size:13px; color:var(--muted); margin:10px 0 4px; }
+  textarea, input[type=text], input[type=number] { width:100%; padding:9px 11px; border:1px solid var(--border);
+          border-radius:6px; background:var(--bg); color:var(--text); font:inherit; }
+  textarea { resize:vertical; }
+  textarea.mono { font-family:var(--mono); font-size:13px; line-height:1.6; }
+  button { padding:8px 16px; border-radius:6px; border:1px solid var(--accent); background:var(--accent);
+           color:#fff; font:inherit; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--accent); padding:3px 10px; font-size:13px; }
+  button:disabled { opacity:.45; cursor:default; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .tabs { display:flex; gap:4px; border-bottom:1px solid var(--border); margin-bottom:6px; }
+  .tab { background:transparent; color:var(--muted); border:none; border-bottom:2px solid transparent;
+         border-radius:0; padding:6px 12px; font-size:14px; cursor:pointer; }
+  .tab[aria-selected=true] { color:var(--text); border-bottom-color:var(--accent); font-weight:600; }
+  .tag { font-family:var(--mono); font-size:12px; padding:2px 8px; border-radius:10px;
+         background:var(--soft); color:var(--accent); }
+  #status { font-size:13px; color:var(--muted); margin-left:10px; }
+  #status[data-kind=error] { color:var(--danger); }
+  .prog { height:4px; background:var(--soft); border-radius:2px; overflow:hidden; margin-top:10px; }
+  .prog span { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
+  .doc { line-height:2.1; font-size:15px; white-space:pre-wrap; }
+  .doc.mono { font-family:var(--mono); font-size:13px; line-height:2; }
+  .span { padding:2px 1px; border-radius:3px; border-bottom:2px solid transparent; }
+  .span.pending { opacity:.35; }
+  .list { margin:0; padding:0; list-style:none; }
+  .list li { display:grid; grid-template-columns:52px 1fr; gap:10px; align-items:baseline;
+             padding:6px 0; border-bottom:1px solid var(--border); }
+  .p { font-family:var(--mono); font-size:13px; text-align:right; }
+  .bar { height:4px; background:var(--hit); border-radius:2px; margin-top:4px; }
+  .meta { font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:10px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>条件に合う箇所を探す</h1>
+  <p class="sub">文章を state に置き、断片ひとつひとつを noul の質問にして送ります。候補は小分け（既定12個ずつ）にして順に投げ、届いた順に色を付けます。state が同じなのでプロンプトキャッシュが効きます。<span class="tag" id="model">-</span></p>
+
+  <section>
+    <div class="tabs" role="tablist">
+      <button class="tab" id="tab-cond" role="tab" aria-selected="true">条件で探す</button>
+      <button class="tab" id="tab-msg" role="tab" aria-selected="false">システムプロンプト × メッセージ</button>
+    </div>
+
+    <div id="pane-cond">
+      <div class="row" id="examples" style="margin-top:10px"></div>
+      <label for="text">文章</label>
+      <textarea id="text" rows="7"></textarea>
+      <label for="cond">条件</label>
+      <input type="text" id="cond" placeholder="例: 納期や期限に関する記述">
+    </div>
+
+    <div id="pane-msg" hidden>
+      <p class="sub" style="margin:10px 0 0">Claude Code の Web Chat と同じ載せ方です。system を state、message を質問側に置き、システムプロンプトのどの行がそのメッセージに効くかを見ます。</p>
+      <div class="row" id="examples-msg" style="margin-top:10px"></div>
+      <label for="sys">システムプロンプト（state）</label>
+      <textarea id="sys" class="mono" rows="12"></textarea>
+      <label for="msg">メッセージ</label>
+      <input type="text" id="msg" placeholder="例: このリポジトリのテストを実行して">
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <button id="run">探す</button>
+      <label style="margin:0 0 0 6px">小分け</label>
+      <input type="number" id="batch" value="12" min="1" max="32" style="width:70px">
+      <span id="status"></span>
+    </div>
+    <div class="prog"><span id="prog"></span></div>
+  </section>
+
+  <section>
+    <h2>結果</h2>
+    <div class="doc" id="doc"><span class="sub">まだ実行していません。</span></div>
+    <div class="meta" id="meta"></div>
+  </section>
+
+  <section>
+    <h2>確率順</h2>
+    <ul class="list" id="list"></ul>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const EXAMPLES = [
+  {label: "契約書", cond: "納期や期限に関する記述",
+   text: "本契約は甲乙間の業務委託に関する条件を定めるものである。乙は、甲の指示に従い、別紙に定める成果物を作成する。成果物の納入期限は2026年3月31日とし、遅延する場合は事前に書面で通知する。報酬は月額50万円とし、翌月末日までに支払う。秘密情報は契約終了後も3年間保持する義務を負う。契約期間は1年とし、いずれからも申し出がなければ自動更新される。"},
+  {label: "障害報告", cond: "原因を述べている箇所",
+   text: "9月18日14時20分ごろから、注文APIの応答が遅くなりました。監視でエラー率の上昇を検知し、担当者が調査を開始しました。調査の結果、キャッシュの有効期限が一斉に切れ、データベースへの問い合わせが集中していたことが分かりました。15時05分に一時的にキャッシュ期間を延長し、応答は回復しました。影響を受けたのは全注文のうち約3%です。再発防止として、有効期限に幅を持たせる対応を来週中に入れます。"},
+  {label: "レビュー", cond: "不満や問題点を述べている箇所",
+   text: "デザインはとても気に入っています。軽くて持ち運びやすく、通勤にちょうどよい大きさです。ただ、ポケットのファスナーが固くて開けにくいのが気になります。素材はしっかりしていて、雨の日でも中身が濡れませんでした。値段は少し高いと感じますが、長く使えそうです。肩紐の縫製がほつれてきたので、そこだけ心配です。"},
+];
+const SYS = `あなたはコーディングを助けるエージェントです。
+コードを書くときは、周囲のコードの書き方に合わせてください。
+コメントは必要なところにだけ書き、同じことを繰り返さないでください。
+ファイルを編集する前に、必ずその内容を読んでください。
+テストは変更した範囲だけでなく、関連する範囲も走らせてください。
+テストが落ちたときは、出力をそのまま伝えてください。隠さないでください。
+コミットは、ユーザーに頼まれたときだけ行ってください。
+破壊的な操作の前には、対象を確認して、ユーザーに断ってください。
+秘密鍵やトークンをコードに書き込まないでください。
+外部に送信する操作は、事前にユーザーの許可を取ってください。
+長い作業では、途中経過を短く報告してください。
+分からないことは推測で答えず、調べるか、分からないと言ってください。`;
+const MSG_EXAMPLES = [
+  {label: "テスト実行", msg: "このリポジトリのテストを実行して"},
+  {label: "コミット", msg: "いまの変更をコミットしておいて"},
+  {label: "ファイル削除", msg: "いらないログファイルを消しておいて"},
+  {label: "API キー", msg: "APIキーを設定ファイルに入れておいて"},
+];
+
+let spansText = [], probs = new Map(), mode = "cond";
+
+function color(p) {
+  if (p < 0.2) return "transparent";
+  const a = Math.min(1, (p - 0.2) / 0.8) * 0.75;
+  return `rgba(235, 104, 52, ${a.toFixed(2)})`;
+}
+
+function paint() {
+  const doc = $("doc");
+  doc.className = "doc" + (mode === "msg" ? " mono" : "");
+  doc.innerHTML = "";
+  spansText.forEach((t, i) => {
+    const el = document.createElement("span");
+    el.className = "span" + (probs.has(i) ? "" : " pending");
+    el.textContent = t;
+    if (probs.has(i)) {
+      const p = probs.get(i);
+      el.style.background = color(p);
+      if (p >= 0.5) el.style.borderBottomColor = "var(--hit)";
+      el.title = `${(p * 100).toFixed(1)}%`;
+    }
+    doc.append(el);
+    if (mode === "msg") doc.append(document.createTextNode("\n"));
+  });
+  const list = $("list");
+  list.innerHTML = "";
+  [...probs.entries()].sort((a, b) => b[1] - a[1]).forEach(([i, p]) => {
+    const li = document.createElement("li");
+    const pe = document.createElement("div");
+    pe.className = "p";
+    pe.textContent = `${(p * 100).toFixed(1)}%`;
+    const box = document.createElement("div");
+    box.textContent = spansText[i];
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.width = `${Math.max(1, p * 100).toFixed(1)}%`;
+    box.append(bar);
+    li.append(pe, box);
+    list.append(li);
+  });
+}
+
+async function run() {
+  const btn = $("run");
+  btn.disabled = true;
+  spansText = [];
+  probs = new Map();
+  $("status").dataset.kind = "";
+  $("status").textContent = "送信中…";
+  $("prog").style.width = "0";
+  const body = mode === "msg"
+    ? {state: $("sys").value, message: $("msg").value, batch: Number($("batch").value)}
+    : {state: $("text").value, condition: $("cond").value, batch: Number($("batch").value)};
+  try {
+    const r = await fetch("stream", {method: "POST", headers: {"content-type": "application/json"},
+                                     body: JSON.stringify(body)});
+    const reader = r.body.getReader();
+    const dec = new TextDecoder();
+    let buf = "", total = 0, model = "", tokens = 0;
+    while (true) {
+      const {value, done} = await reader.read();
+      if (done) break;
+      buf += dec.decode(value, {stream: true});
+      const lines = buf.split("\n");
+      buf = lines.pop();
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        const ev = JSON.parse(line);
+        if (ev.error) throw new Error(ev.error);
+        if (ev.total !== undefined) {
+          total = ev.total;
+          spansText = ev.spans_text;
+          paint();
+          $("status").textContent = `0 / ${total}`;
+        }
+        if (ev.spans) {
+          ev.spans.forEach((s) => probs.set(s.i, s.p));
+          model = ev.model || model;
+          paint();
+          $("status").textContent = `${probs.size} / ${total}`;
+          $("prog").style.width = `${(probs.size / total * 100).toFixed(1)}%`;
+        }
+        if (ev.finished) {
+          tokens = ev.tokens;
+          $("meta").textContent = `${total} 候補 / ${ev.ms} ms / ${tokens} tokens`
+            + (model ? ` / ${model}` : "");
+          $("status").textContent = "";
+        }
+      }
+    }
+  } catch (e) {
+    $("status").dataset.kind = "error";
+    $("status").textContent = String(e.message).slice(0, 200);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function setMode(m) {
+  mode = m;
+  $("tab-cond").setAttribute("aria-selected", String(m === "cond"));
+  $("tab-msg").setAttribute("aria-selected", String(m === "msg"));
+  $("pane-cond").hidden = m !== "cond";
+  $("pane-msg").hidden = m !== "msg";
+}
+
+EXAMPLES.forEach((ex) => {
+  const b = document.createElement("button");
+  b.className = "ghost";
+  b.textContent = ex.label;
+  b.addEventListener("click", () => { $("text").value = ex.text; $("cond").value = ex.cond; });
+  $("examples").append(b);
+});
+MSG_EXAMPLES.forEach((ex) => {
+  const b = document.createElement("button");
+  b.className = "ghost";
+  b.textContent = ex.label;
+  b.addEventListener("click", () => { $("msg").value = ex.msg; });
+  $("examples-msg").append(b);
+});
+$("tab-cond").addEventListener("click", () => setMode("cond"));
+$("tab-msg").addEventListener("click", () => setMode("msg"));
+$("run").addEventListener("click", run);
+$("text").value = EXAMPLES[0].text;
+$("cond").value = EXAMPLES[0].cond;
+$("sys").value = SYS;
+$("msg").value = MSG_EXAMPLES[0].msg;
+fetch("model").then((r) => r.json()).then((j) => { if (j.model) $("model").textContent = j.model; }).catch(() => {});
+</script>
+</body>
+</html>

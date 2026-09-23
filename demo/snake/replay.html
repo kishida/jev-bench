@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>Snake replay</title>
+<style>
+  :root { --bg:#f7f7f5; --panel:#fff; --text:#1d1d1b; --muted:#6b6b66; --border:#e2e1dc; --accent:#2f6fdb;
+          --soft:#dbe6fa; --head:#146e28; --body:#6ebe6e; --apple:#d23228; --wall:#141414; --danger:#b3261e;
+          --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --panel:#1f1f1d; --text:#ecebe6; --muted:#9a9993;
+          --border:#34332f; --accent:#7aa7f5; --soft:#24324b; --danger:#f28b82; } }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.6 system-ui,-apple-system,"Segoe UI","Hiragino Sans",sans-serif; }
+  main { max-width:1100px; margin:0 auto; padding:24px 16px 60px; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  .lead { color:var(--muted); margin:0 0 20px; }
+  section { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-bottom:14px; }
+  h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 10px; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  select, input[type=file], button { font:inherit; padding:6px 10px; border:1px solid var(--border);
+          border-radius:6px; background:var(--bg); color:var(--text); }
+  button { background:var(--accent); border-color:var(--accent); color:#fff; cursor:pointer; }
+  button.ghost { background:transparent; color:var(--accent); }
+  button:disabled { opacity:.45; cursor:default; }
+  .stage { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:16px; align-items:start; }
+  canvas { width:100%; height:auto; background:var(--panel); border-radius:6px; display:block; }
+  table { border-collapse:collapse; width:100%; font-size:14px; }
+  th, td { text-align:left; padding:4px 8px; border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  td.num, th.num { text-align:right; font-family:var(--mono); }
+  .bar-row { margin-bottom:8px; }
+  .bar-top { display:flex; justify-content:space-between; font-size:13px; }
+  .bar-track { height:12px; background:var(--soft); border-radius:4px; overflow:hidden; }
+  .bar-fill { display:block; height:100%; background:#9db8e8; }
+  .chosen .bar-fill { background:var(--accent); }
+  .chosen .bar-top { font-weight:600; }
+  .unsafe .bar-top b::after { content:" ×"; color:var(--danger); }
+  .meta { font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:8px; }
+  .dead { color:var(--danger); font-weight:600; }
+  input[type=range] { width:100%; }
+  .legend { display:flex; gap:14px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-top:8px; }
+  .sw { display:inline-block; width:12px; height:12px; border-radius:2px; vertical-align:-1px; margin-right:4px; }
+  @media (max-width:820px) { .stage { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Snake replay</h1>
+  <p class="lead">llama-server の <code>/v1/systemone</code> に一手ずつ「上下左右どれ？」と聞いて遊んだ記録を再生します。棒グラフはそのときモデルが出した各方向の確率、× は進めば死ぬ方向です。</p>
+
+  <section>
+    <div class="row">
+      <input type="file" id="file" accept=".json" multiple>
+      <select id="run"></select>
+      <select id="game"></select>
+      <button id="play">▶ 再生</button>
+      <button class="ghost" id="prev">◀</button>
+      <button class="ghost" id="next">▶</button>
+      <select id="speed">
+        <option value="400">0.4秒/手</option>
+        <option value="200" selected>0.2秒/手</option>
+        <option value="80">0.08秒/手</option>
+      </select>
+    </div>
+    <div class="row" style="margin-top:10px"><input type="range" id="slider" min="0" value="0"></div>
+  </section>
+
+  <div class="stage">
+    <section>
+      <h2>盤面</h2>
+      <canvas id="board" width="480" height="480"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--head)"></span>頭</span>
+        <span><span class="sw" style="background:var(--body)"></span>胴</span>
+        <span><span class="sw" style="background:var(--apple)"></span>りんご</span>
+        <span><span class="sw" style="background:var(--wall)"></span>壁</span>
+      </div>
+      <div class="meta" id="status"></div>
+    </section>
+
+    <section>
+      <h2>モデルの判断</h2>
+      <div id="bars"></div>
+      <div class="meta" id="pick"></div>
+    </section>
+  </div>
+
+  <section>
+    <h2>まとめ</h2>
+    <div id="summary"></div>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const DIRS = ["up", "down", "left", "right"];
+const CAUSE = {wall: "壁に当たった", self: "自分の体に当たった", stalled: "りんごに辿り着けず打ち切り",
+  "step limit": "手数の上限に達した", cleared: "盤面を埋めきった"};
+
+const runs = new Map(); // name -> {summary, games}
+let cur = null, gi = 0, fi = 0, timer = null;
+
+function fmt(n, d = 2) { return typeof n === "number" ? n.toFixed(d) : n; }
+
+async function addFiles(files) {
+  for (const f of files) {
+    try {
+      const data = JSON.parse(await f.text());
+      if (!data.games) continue;
+      runs.set(f.name.replace(/\.json$/, ""), data);
+    } catch (e) { console.error(f.name, e); }
+  }
+  fillRuns();
+  renderSummary();
+}
+
+function fillRuns() {
+  $("run").innerHTML = "";
+  for (const name of runs.keys()) {
+    const o = document.createElement("option");
+    o.value = o.textContent = name;
+    $("run").append(o);
+  }
+  selectRun($("run").value);
+}
+
+function selectRun(name) {
+  cur = runs.get(name);
+  if (!cur) return;
+  $("game").innerHTML = "";
+  cur.games.forEach((g, i) => {
+    const o = document.createElement("option");
+    o.value = i;
+    o.textContent = `game ${i} — score ${g.score}, ${g.steps} 手, ${g.cause}`;
+    $("game").append(o);
+  });
+  gi = 0;
+  selectGame(0);
+}
+
+function selectGame(i) {
+  gi = Number(i);
+  fi = 0;
+  $("slider").max = cur.games[gi].frames.length - 1;
+  $("slider").value = 0;
+  draw();
+}
+
+const drawApple = (ctx, x, y, cell, col) => {
+  const cx = (x + 1) * cell + cell / 2, cy = (y + 1) * cell + cell / 2, r = cell * 0.36;
+  ctx.fillStyle = "#4a7a2a";
+  ctx.fillRect(cx - 1, cy - r - cell * 0.16, 2, cell * 0.16);
+  ctx.beginPath();
+  ctx.ellipse(cx + r * 0.5, cy - r - cell * 0.06, r * 0.42, r * 0.22, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.arc(cx - r * 0.3, cy + r * 0.08, r * 0.78, 0, Math.PI * 2);
+  ctx.arc(cx + r * 0.3, cy + r * 0.08, r * 0.78, 0, Math.PI * 2);
+  ctx.fill();
+};
+
+function draw() {
+  const g = cur.games[gi], f = g.frames[fi];
+  const cells = f.body.concat(f.apple ? [f.apple] : []);
+  const W = Math.max(...cells.map((c) => c[0])) + 1, H = Math.max(...cells.map((c) => c[1])) + 1;
+  const w = Math.max(W, cur.summary.board ? +cur.summary.board.split("x")[0] : W);
+  const h = Math.max(H, cur.summary.board ? +cur.summary.board.split("x")[1] : H);
+  const cv = $("board"), ctx = cv.getContext("2d");
+  const cell = Math.floor(cv.width / (w + 2));
+  const css = getComputedStyle(document.documentElement);
+  const c = (n) => css.getPropertyValue(n).trim();
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = c("--wall");
+  ctx.fillRect(0, 0, (w + 2) * cell, (h + 2) * cell);
+  ctx.fillStyle = c("--bg");
+  ctx.fillRect(cell, cell, w * cell, h * cell);
+  ctx.strokeStyle = c("--border");
+  for (let i = 0; i <= w; i++) { ctx.beginPath(); ctx.moveTo(cell + i * cell, cell); ctx.lineTo(cell + i * cell, cell + h * cell); ctx.stroke(); }
+  for (let i = 0; i <= h; i++) { ctx.beginPath(); ctx.moveTo(cell, cell + i * cell); ctx.lineTo(cell + w * cell, cell + i * cell); ctx.stroke(); }
+  const box = (x, y, col) => { ctx.fillStyle = col; ctx.fillRect((x + 1) * cell + 1, (y + 1) * cell + 1, cell - 2, cell - 2); };
+  const last = fi === g.frames.length - 1;
+  f.body.slice(1).forEach(([x, y]) => box(x, y, c("--body")));
+  if (f.apple) drawApple(ctx, f.apple[0], f.apple[1], cell, c("--apple"));
+  box(f.body[0][0], f.body[0][1], last ? c("--danger") : c("--head"));
+  if (last) {
+    ctx.fillStyle = "rgba(20,20,20,.62)";
+    ctx.fillRect(0, 0, (w + 2) * cell, (h + 2) * cell);
+    ctx.fillStyle = "#fff";
+    ctx.textAlign = "center";
+    ctx.font = "600 22px system-ui";
+    ctx.fillText(CAUSE[g.cause] || g.cause, (w + 2) * cell / 2, (h + 2) * cell / 2 - 6);
+    ctx.font = "14px system-ui";
+    ctx.fillText(`スコア ${g.score} / ${g.steps} 手`, (w + 2) * cell / 2, (h + 2) * cell / 2 + 20);
+  }
+
+  $("status").innerHTML = `手 ${fi} / ${g.frames.length - 1} &nbsp; score ${f.score} &nbsp; 長さ ${f.body.length} &nbsp; 進行方向 ${f.dir}`
+    + (last ? ` &nbsp; <span class="dead">終了: ${g.cause}</span>` : "");
+
+  const bars = $("bars");
+  bars.innerHTML = "";
+  const probs = f.probs || {};
+  if (!Object.keys(probs).length) {
+    bars.innerHTML = '<p class="meta">この実行には確率がありません（greedy / random）。</p>';
+  } else {
+    for (const d of DIRS) {
+      const p = probs[d] ?? 0;
+      const row = document.createElement("div");
+      row.className = "bar-row" + (d === f.choice ? " chosen" : "") + (f.safe && f.safe.length && !f.safe.includes(d) ? " unsafe" : "");
+      row.innerHTML = `<div class="bar-top"><b>${d}</b><span>${(p * 100).toFixed(1)}%</span></div>`
+        + `<div class="bar-track"><span class="bar-fill" style="width:${(p * 100).toFixed(1)}%"></span></div>`;
+      bars.append(row);
+    }
+  }
+  $("pick").textContent = last ? "" :
+    `選んだ手: ${f.choice}${f.safe && f.safe.length ? (f.safe.includes(f.choice) ? "（安全）" : "（死ぬ手）") : ""}`
+    + (f.confidence ? ` / confidence ${fmt(f.confidence, 3)}` : "");
+  $("slider").value = fi;
+  $("game").value = gi;
+}
+
+function renderSummary() {
+  const rows = [...runs.entries()].map(([name, d]) => {
+    const s = d.summary;
+    const deaths = Object.entries(s.causes || {}).map(([k, v]) => `${k} ${v}`).join(", ");
+    return `<tr><td>${name}</td><td>${s.mode}</td><td class="num">${fmt(s.mean_score)}</td>`
+      + `<td class="num">${s.max_score}</td><td class="num">${fmt(s.mean_steps, 1)}</td>`
+      + `<td class="num">${s.mean_ms_per_move ? fmt(s.mean_ms_per_move, 0) + " ms" : "-"}</td><td>${deaths}</td></tr>`;
+  }).join("");
+  $("summary").innerHTML = rows
+    ? `<table><thead><tr><th>実行</th><th>入力</th><th class="num">平均スコア</th><th class="num">最高</th>`
+      + `<th class="num">平均手数</th><th class="num">1手あたり</th><th>終わり方</th></tr></thead><tbody>${rows}</tbody></table>`
+    : '<p class="meta">JSON を読み込むとここに出ます。</p>';
+}
+
+function step(d) {
+  const g = cur.games[gi];
+  fi = Math.min(Math.max(0, fi + d), g.frames.length - 1);
+  draw();
+}
+
+$("file").addEventListener("change", (e) => addFiles(e.target.files));
+$("run").addEventListener("change", (e) => selectRun(e.target.value));
+$("game").addEventListener("change", (e) => selectGame(e.target.value));
+$("slider").addEventListener("input", (e) => { fi = +e.target.value; draw(); });
+$("prev").addEventListener("click", () => step(-1));
+$("next").addEventListener("click", () => step(1));
+$("play").addEventListener("click", () => {
+  if (timer) { clearInterval(timer); timer = null; $("play").textContent = "▶ 再生"; return; }
+  $("play").textContent = "⏸ 停止";
+  timer = setInterval(() => {
+    const g = cur.games[gi];
+    if (fi >= g.frames.length - 1) { clearInterval(timer); timer = null; $("play").textContent = "▶ 再生"; return; }
+    step(1);
+  }, +$("speed").value);
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowLeft") step(-1);
+  if (e.key === "ArrowRight") step(1);
+});
+
+// results/snake/index.json にある記録を読む（file:// では fetch できないので、その場合はファイル選択で読む）
+(async () => {
+  try {
+    const idx = await (await fetch("../../results/snake/index.json")).json();
+    for (const e of idx) {
+      const r = await fetch(`../../results/snake/${e.tag}.json`);
+      if (r.ok) runs.set(e.label || e.tag, await r.json());
+    }
+  } catch {}
+  if (runs.size) fillRuns();
+  renderSummary();
+})();
+</script>
+</body>
+</html>

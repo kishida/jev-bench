@@ -1,0 +1,142 @@
+[
+ {
+  "tag": "image_deepseek_c3",
+  "label": "DeepSeek V4 — 画像 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_deepseek_c3",
+  "label": "DeepSeek V4 — 番号+座標 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "image_gemma12b_c3",
+  "label": "Gemma 4 12B — 画像 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_gemma12b_c3",
+  "label": "Gemma 4 12B — 番号+座標 3x3",
+  "solve": 0.4
+ },
+ {
+  "tag": "labels_gemma12b_c5",
+  "label": "Gemma 4 12B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_muse_c3",
+  "label": "Muse-Glimmer 30B — 番号+座標 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_muse_c5",
+  "label": "Muse-Glimmer 30B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q3_14b_c3",
+  "label": "Qwen3 14B — 番号+座標 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q3_14b_c5",
+  "label": "Qwen3 14B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q3_32b_c3",
+  "label": "Qwen3 32B — 番号+座標 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q3_32b_c5",
+  "label": "Qwen3 32B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "text_q36_27b",
+  "label": "Qwen3.6 27B — AA",
+  "solve": 0.0
+ },
+ {
+  "tag": "image_q36_27b_c3",
+  "label": "Qwen3.6 27B — 画像 3x3",
+  "solve": 0.4
+ },
+ {
+  "tag": "image_q36_27b_c5",
+  "label": "Qwen3.6 27B — 画像 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q36_27b",
+  "label": "Qwen3.6 27B — 番号+座標",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q36_27b_c3",
+  "label": "Qwen3.6 27B — 番号+座標 3x3",
+  "solve": 0.4
+ },
+ {
+  "tag": "labels_q36_27b_c5",
+  "label": "Qwen3.6 27B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "image_q36_35b_q4kxl_c3",
+  "label": "Qwen3.6 35B A3B — 画像 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "image_q36_35b_q4kxl_c5",
+  "label": "Qwen3.6 35B A3B — 画像 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q36_35b_q4kxl_c3",
+  "label": "Qwen3.6 35B A3B — 番号+座標 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q36_35b_q4kxl_c5",
+  "label": "Qwen3.6 35B A3B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "image_q38_27b_c3",
+  "label": "Qwen3.8 27B — 画像 3x3",
+  "solve": 0.4
+ },
+ {
+  "tag": "image_q38_27b_c5",
+  "label": "Qwen3.8 27B — 画像 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_q38_27b_c3",
+  "label": "Qwen3.8 27B — 番号+座標 3x3",
+  "solve": 0.4
+ },
+ {
+  "tag": "labels_q38_27b_c5",
+  "label": "Qwen3.8 27B — 番号+座標 5x5",
+  "solve": 0.0
+ },
+ {
+  "tag": "image_flashnext_c3",
+  "label": "Qwen3.8 Flash-Next — 画像 3x3",
+  "solve": 0.0
+ },
+ {
+  "tag": "labels_flashnext_c3",
+  "label": "Qwen3.8 Flash-Next — 番号+座標 3x3",
+  "solve": 0.4
+ },
+ {
+  "tag": "labels_flashnext_c5",
+  "label": "Qwen3.8 Flash-Next — 番号+座標 5x5",
+  "solve": 0.0
+ }
+]

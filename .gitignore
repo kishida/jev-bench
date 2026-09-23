@@ -1,0 +1,6 @@
+__pycache__/
+temp/
+*.npy
+
+# the Hugging Face dataset repo, cloned here as a working copy
+jev-bench/

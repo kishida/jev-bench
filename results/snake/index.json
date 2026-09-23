@@ -1,0 +1,94 @@
+[
+ {
+  "tag": "greedy",
+  "label": "りんごに近づく手（参考）"
+ },
+ {
+  "tag": "random",
+  "label": "でたらめ（参考）"
+ },
+ {
+  "tag": "text_qwen35_2b",
+  "label": "AA: Qwen3.5 2B"
+ },
+ {
+  "tag": "text_qwen35_4b",
+  "label": "AA: Qwen3.5 4B"
+ },
+ {
+  "tag": "text_qwen35_9b",
+  "label": "AA: Qwen3.5 9B"
+ },
+ {
+  "tag": "text_qwen35_27b",
+  "label": "AA: Qwen3.5 27B"
+ },
+ {
+  "tag": "text_qwen36_27b",
+  "label": "AA: Qwen3.6 27B"
+ },
+ {
+  "tag": "text_qwen38_27b",
+  "label": "AA: Qwen3.8 27B"
+ },
+ {
+  "tag": "text_qwen36_35b",
+  "label": "AA: Qwen3.6 35B-A3B"
+ },
+ {
+  "tag": "text_jwenv17",
+  "label": "AA: jwenv 1.7B"
+ },
+ {
+  "tag": "text_gemma4_12b",
+  "label": "AA: Gemma 4 12B"
+ },
+ {
+  "tag": "min_qwen35_27b",
+  "label": "AA座標なし: Qwen3.5 27B"
+ },
+ {
+  "tag": "min_qwen36_27b",
+  "label": "AA座標なし: Qwen3.6 27B"
+ },
+ {
+  "tag": "min_qwen38_27b",
+  "label": "AA座標なし: Qwen3.8 27B"
+ },
+ {
+  "tag": "min_qwen35_9b",
+  "label": "AA座標なし: Qwen3.5 9B"
+ },
+ {
+  "tag": "image_qwen35_2b",
+  "label": "画像: Qwen3.5 2B"
+ },
+ {
+  "tag": "image_qwen35_4b",
+  "label": "画像: Qwen3.5 4B"
+ },
+ {
+  "tag": "image_qwen35_9b",
+  "label": "画像: Qwen3.5 9B"
+ },
+ {
+  "tag": "image_qwen35_27b_circle",
+  "label": "画像: Qwen3.5 27B"
+ },
+ {
+  "tag": "image_qwen36_27b_circle",
+  "label": "画像: Qwen3.6 27B"
+ },
+ {
+  "tag": "image_qwen38_27b_circle",
+  "label": "画像: Qwen3.8 27B"
+ },
+ {
+  "tag": "image_qwen38_27b",
+  "label": "画像(四角): Qwen3.8 27B"
+ },
+ {
+  "tag": "image_qwen36_35b_circle",
+  "label": "画像: Qwen3.6 35B-A3B"
+ }
+]

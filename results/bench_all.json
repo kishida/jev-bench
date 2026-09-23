@@ -1,0 +1,451 @@
+{
+ "Gemma 4 12B UD-Q4_K_XL": {
+  "path": "unsloth/gemma-4-12b-it-GGUF/gemma-4-12b-it-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 3.588463068008423,
+  "acc": 0.890848026868178,
+  "ece_raw": 0.09796683690130137,
+  "ece_cal": 0.034104987129199626,
+  "nll_raw": 0.7963315403139263,
+  "nll_cal": 0.3411869988862228,
+  "latency": {
+   "mean_ms": 153.6848545074463,
+   "median_ms": 135.97607612609863,
+   "n": 50
+  },
+  "eval_seconds": 221.22134160995483
+ },
+ "gpt-oss 20B MXFP4": {
+  "path": "lmstudio-community/gpt-oss-20b-GGUF/gpt-oss-20b-MXFP4.gguf",
+  "extra": [],
+  "temperature": 1.5397120714187622,
+  "acc": 0.8421494542401343,
+  "ece_raw": 0.061398281429229665,
+  "ece_cal": 0.027358915049256284,
+  "nll_raw": 0.5165307990640672,
+  "nll_cal": 0.4626504058612272,
+  "latency": {
+   "mean_ms": 183.2282543182373,
+   "median_ms": 182.0378303527832,
+   "n": 50
+  },
+  "eval_seconds": 185.45583081245422
+ },
+ "LLM-jp-4 8B thinking Q4_K_M": {
+  "path": "llm-jp/llm-jp-4-8b-thinking-gguf/llm-jp-4-8b-thinking-Q4_K_M.gguf",
+  "extra": [],
+  "temperature": 1.6903574466705322,
+  "acc": 0.8245172124265323,
+  "ece_raw": 0.09851837077975084,
+  "ece_cal": 0.04366061723308138,
+  "nll_raw": 0.6026406462048748,
+  "nll_cal": 0.4791976426475146,
+  "latency": {
+   "mean_ms": 78.14897537231445,
+   "median_ms": 66.99776649475098,
+   "n": 50
+  },
+  "eval_seconds": 115.03449034690857
+ },
+ "jwenv 1.7B poc Q8_0": {
+  "path": "jwenv-1.7b-poc-q8_0.gguf",
+  "extra": [],
+  "temperature": 1.58314847946167,
+  "acc": 0.8035264483627204,
+  "ece_raw": 0.09472588579537031,
+  "ece_cal": 0.033130062105267706,
+  "nll_raw": 0.6095981523632157,
+  "nll_cal": 0.5300971092115319,
+  "latency": {
+   "mean_ms": 51.37495994567871,
+   "median_ms": 49.61228370666504,
+   "n": 50
+  },
+  "eval_seconds": 53.85786414146423
+ },
+ "Qwen3.5 2B Q8_0": {
+  "path": "lmstudio-community/Qwen3.5-2B-GGUF/Qwen3.5-2B-Q8_0.gguf",
+  "extra": [],
+  "temperature": 0.8490583896636963,
+  "acc": 0.709487825356843,
+  "ece_raw": 0.04619737283900269,
+  "ece_cal": 0.036962811102378056,
+  "nll_raw": 0.7465621327936447,
+  "nll_cal": 0.7395606904386035,
+  "latency": {
+   "mean_ms": 52.44417667388916,
+   "median_ms": 50.62294006347656,
+   "n": 50
+  },
+  "eval_seconds": 70.23214936256409
+ },
+ "Qwen3 1.7B Q8_0": {
+  "path": "lmstudio-community/Qwen3-1.7B-GGUF/Qwen3-1.7B-Q8_0.gguf",
+  "extra": [],
+  "temperature": 8.571369171142578,
+  "acc": 0.7128463476070529,
+  "ece_raw": 0.2710151938374646,
+  "ece_cal": 0.03423576514573214,
+  "nll_raw": 3.693650302163448,
+  "nll_cal": 0.7846930727986354,
+  "latency": {
+   "mean_ms": 54.844584465026855,
+   "median_ms": 52.10065841674805,
+   "n": 50
+  },
+  "eval_seconds": 57.87462568283081
+ },
+ "jwenv 0.6B poc Q8_0": {
+  "path": "jwenv-0.6b-poc-q8_0.gguf",
+  "extra": [],
+  "temperature": 1.6024717092514038,
+  "acc": 0.6952141057934509,
+  "ece_raw": 0.1252127958608745,
+  "ece_cal": 0.04259174081177368,
+  "nll_raw": 0.8543554424392567,
+  "nll_cal": 0.7601777597228374,
+  "latency": {
+   "mean_ms": 40.823092460632324,
+   "median_ms": 40.457963943481445,
+   "n": 50
+  },
+  "eval_seconds": 56.06408667564392
+ },
+ "LFM2.5 8B A1B UD-Q4_K_XL": {
+  "path": "unsloth/LFM2.5-8B-A1B-GGUF/LFM2.5-8B-A1B-UD-Q4_K_XL.gguf",
+  "extra": [
+   "--jev-assistant-prefix",
+   "<think>\\n\\n</think>\\n\\n"
+  ],
+  "temperature": 2.6738438606262207,
+  "acc": 0.5869017632241813,
+  "ece_raw": 0.24914408888917894,
+  "ece_cal": 0.04400576442967178,
+  "nll_raw": 1.4011117632413712,
+  "nll_cal": 0.9756426489972274,
+  "latency": {
+   "mean_ms": 59.935688972473145,
+   "median_ms": 56.18405342102051,
+   "n": 50
+  },
+  "eval_seconds": 76.5319197177887
+ },
+ "LFM2.5 350M Q8_0": {
+  "path": "LiquidAI/LFM2.5-350M-GGUF/LFM2.5-350M-Q8_0.gguf",
+  "extra": [],
+  "temperature": 6.698347568511963,
+  "acc": 0.5734676742233418,
+  "ece_raw": 0.34619915039799765,
+  "ece_cal": 0.059221272827348605,
+  "nll_raw": 2.8284069850906937,
+  "nll_cal": 1.0882895297823931,
+  "latency": {
+   "mean_ms": 17.571921348571777,
+   "median_ms": 14.46676254272461,
+   "n": 50
+  },
+  "eval_seconds": 23.955118894577026
+ },
+ "Qwen3 0.6B Q8_0": {
+  "path": "lmstudio-community/Qwen3-0.6B-GGUF/Qwen3-0.6B-Q8_0.gguf",
+  "extra": [],
+  "temperature": 6.59514045715332,
+  "acc": 0.5130142737195634,
+  "ece_raw": 0.3485063237573848,
+  "ece_cal": 0.05462607048182533,
+  "nll_raw": 2.4148957264968094,
+  "nll_cal": 1.1869012019523264,
+  "latency": {
+   "mean_ms": 41.534972190856934,
+   "median_ms": 39.35551643371582,
+   "n": 50
+  },
+  "eval_seconds": 126.52334332466125
+ },
+ "gemma-3 270m-it Q8_0": {
+  "path": "lmstudio-community/gemma-3-270m-it-GGUF/gemma-3-270m-it-Q8_0.gguf",
+  "extra": [],
+  "temperature": 12.05817699432373,
+  "acc": 0.2879932829554996,
+  "ece_raw": 0.3429762435622177,
+  "ece_cal": 0.0433074040464006,
+  "nll_raw": 2.0823272984585315,
+  "nll_cal": 1.3879828894153556,
+  "latency": {
+   "mean_ms": 21.78788185119629,
+   "median_ms": 18.00823211669922,
+   "n": 50
+  },
+  "eval_seconds": 29.911495447158813
+ },
+ "Qwen3.5 27B UD-IQ3_XXS": {
+  "path": "unsloth/Qwen3.5-27B-GGUF/Qwen3.5-27B-UD-IQ3_XXS.gguf",
+  "extra": [],
+  "temperature": 1.3196861743927002,
+  "acc": 0.9143576826196473,
+  "ece_raw": 0.03955795276410457,
+  "ece_cal": 0.021830519470324702,
+  "nll_raw": 0.2928686818392931,
+  "nll_cal": 0.26298996653132833,
+  "latency": {
+   "mean_ms": 362.10376739501953,
+   "median_ms": 309.7491264343262,
+   "n": 50
+  },
+  "eval_seconds": 503.9954836368561
+ },
+ "Qwen3.6 27B UD-IQ3_XXS": {
+  "path": "unsloth/Qwen3.6-27B-GGUF/Qwen3.6-27B-UD-IQ3_XXS.gguf",
+  "extra": [],
+  "temperature": 1.5854439735412598,
+  "acc": 0.9193954659949622,
+  "ece_raw": 0.03308094006863938,
+  "ece_cal": 0.02220706909699238,
+  "nll_raw": 0.28242272172212596,
+  "nll_cal": 0.2464613991724081,
+  "latency": {
+   "mean_ms": 355.2807903289795,
+   "median_ms": 299.7279167175293,
+   "n": 50
+  },
+  "eval_seconds": 528.6349184513092
+ },
+ "Qwen3.8 27B UD-IQ3_XXS": {
+  "path": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-IQ3_XXS.gguf",
+  "extra": [],
+  "temperature": 1.5513615608215332,
+  "acc": 0.9135180520570949,
+  "ece_raw": 0.0370951434337747,
+  "ece_cal": 0.020757218242269306,
+  "nll_raw": 0.33055893931592,
+  "nll_cal": 0.28662705690330376,
+  "latency": {
+   "mean_ms": 343.05230617523193,
+   "median_ms": 304.4860363006592,
+   "n": 50
+  },
+  "eval_seconds": 499.0848500728607
+ },
+ "Qwen3.5 4B Q4_K_M": {
+  "path": "lmstudio-community/Qwen3.5-4B-GGUF/Qwen3.5-4B-Q4_K_M.gguf",
+  "extra": [],
+  "temperature": 1.0991390943527222,
+  "acc": 0.852225020990764,
+  "ece_raw": 0.04065913114749942,
+  "ece_cal": 0.032503003777726094,
+  "nll_raw": 0.421745241837543,
+  "nll_cal": 0.4102460910663538,
+  "latency": {
+   "mean_ms": 101.02609157562256,
+   "median_ms": 94.54607963562012,
+   "n": 50
+  },
+  "eval_seconds": 154.51452112197876
+ },
+ "Qwen3.5 9B UD-Q4_K_XL": {
+  "path": "unsloth/Qwen3.5-9B-GGUF/Qwen3.5-9B-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 1.2383232116699219,
+  "acc": 0.8849706129303107,
+  "ece_raw": 0.04272649486099013,
+  "ece_cal": 0.027202727782522633,
+  "nll_raw": 0.39347587958525704,
+  "nll_cal": 0.3616106429000194,
+  "latency": {
+   "mean_ms": 116.07978820800781,
+   "median_ms": 100.85463523864746,
+   "n": 50
+  },
+  "eval_seconds": 176.71243119239807
+ },
+ "Qwen3.6 35B A3B UD-IQ2_M": {
+  "path": "unsloth/Qwen3.6-35B-A3B-MTP-GGUF/Qwen3.6-35B-A3B-UD-IQ2_M.gguf",
+  "extra": [],
+  "temperature": 1.3827357292175293,
+  "acc": 0.9126784214945424,
+  "ece_raw": 0.043034506369416484,
+  "ece_cal": 0.02187052930865173,
+  "nll_raw": 0.3371866103751291,
+  "nll_cal": 0.29091019676025415,
+  "latency": {
+   "mean_ms": 187.3543357849121,
+   "median_ms": 177.78944969177246,
+   "n": 50
+  },
+  "eval_seconds": 261.3930113315582
+ },
+ "jwenv 4B poc Q8_0": {
+  "path": "jwenv-4b-poc-q8_0.gguf",
+  "extra": [],
+  "temperature": 1.604996919631958,
+  "acc": 0.8723761544920235,
+  "ece_raw": 0.05791313730377902,
+  "ece_cal": 0.02162276172691672,
+  "nll_raw": 0.4208414136085807,
+  "nll_cal": 0.37313154313784497,
+  "latency": {
+   "mean_ms": 64.96926307678223,
+   "median_ms": 58.74133110046387,
+   "n": 50
+  },
+  "eval_seconds": 78.49541282653809
+ },
+ "Qwen3.8 Flash-Next UD-Q4_K_XL": {
+  "path": "(remote) Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf",
+  "extra": [],
+  "temperature": 1.2605921030044556,
+  "acc": 0.943744752308984,
+  "ece_raw": 0.02311884751941503,
+  "ece_cal": 0.015312511948816466,
+  "nll_raw": 0.20706279982226297,
+  "nll_cal": 0.1956507958603213,
+  "latency": {
+   "mean_ms": 291.8456697463989,
+   "median_ms": 276.60274505615234,
+   "n": 50
+  },
+  "remote": "http://mac.local:8080"
+ },
+ "DeepSeek V4 Flash-Vision UD-Q4_K_XL": {
+  "path": "(remote) DeepSeek-V4-Flash-Vision-Exp-UD-Q4_K_XL-00001-of-00005.gguf",
+  "extra": [],
+  "temperature": 2.8043243885040283,
+  "acc": 0.9135180520570949,
+  "ece_raw": 0.06873272362663113,
+  "ece_cal": 0.02426751316967013,
+  "nll_raw": 0.5786796054629494,
+  "nll_cal": 0.27660738241738586,
+  "latency": {
+   "mean_ms": 1212.5604343414307,
+   "median_ms": 1176.3856410980225,
+   "n": 50
+  },
+  "remote": "http://mac.local:8080"
+ },
+ "GLM-5.3-Flash UD-Q4_K_XL": {
+  "path": "(remote) GLM-5.3-Flash-UD-Q4_K_XL-00001-of-00006.gguf",
+  "extra": [],
+  "temperature": 1.1804451942443848,
+  "acc": 0.9168765743073047,
+  "ece_raw": 0.022775667397130828,
+  "ece_cal": 0.011515938215884354,
+  "nll_raw": 0.26764365382962685,
+  "nll_cal": 0.258527128240499,
+  "latency": {
+   "mean_ms": 691.5700626373291,
+   "median_ms": 648.0178833007812,
+   "n": 50
+  },
+  "remote": "http://mac.local:8080"
+ },
+ "Qwen3.8 27B UD-Q4_K_XL": {
+  "path": "(remote 8083) Qwen3.8-27B-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 1.3650398254394531,
+  "acc": 0.9185558354324097,
+  "ece_raw": 0.028729892878711995,
+  "ece_cal": 0.016802907541404396,
+  "nll_raw": 0.2770781301546007,
+  "nll_cal": 0.2548796470980962,
+  "latency": {
+   "mean_ms": null
+  },
+  "remote": "http://mac.local:8083"
+ },
+ "Qwen3.6 27B Q4_K_XL": {
+  "path": "(remote) Qwen3.6-27B-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 1.4027600288391113,
+  "acc": 0.9227539882451721,
+  "ece_raw": 0.029582051392310776,
+  "ece_cal": 0.012636516920619758,
+  "nll_raw": 0.27309424169412483,
+  "nll_cal": 0.24592481297648355,
+  "latency": {
+   "mean_ms": 403.1048393249512,
+   "median_ms": 371.5994358062744,
+   "n": 50
+  },
+  "remote": "http://mac.local:8084"
+ },
+ "Muse-Glimmer 30B Q4_K_XL": {
+  "path": "(remote) Muse-Glimmer-30B-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 0.8361002802848816,
+  "acc": 0.8841309823677582,
+  "ece_raw": 0.03574915230086826,
+  "ece_cal": 0.020962332461336157,
+  "nll_raw": 0.3737664288391111,
+  "nll_cal": 0.37422027641534067,
+  "latency": {
+   "mean_ms": 467.5088357925415,
+   "median_ms": 414.17407989501953,
+   "n": 50
+  },
+  "remote": "http://mac.local:8085"
+ },
+ "Qwen3 14B": {
+  "path": "(remote) Qwen3-14B-Q4_K_M.gguf",
+  "extra": [],
+  "temperature": 5.457854747772217,
+  "acc": 0.8807724601175483,
+  "ece_raw": 0.10963600580510349,
+  "ece_cal": 0.0249501907222152,
+  "nll_raw": 1.3669596379934499,
+  "nll_cal": 0.38451614399734013,
+  "latency": {
+   "mean_ms": 145.4048204421997,
+   "median_ms": 124.15838241577148,
+   "n": 50
+  },
+  "remote": "http://127.0.0.1:18160"
+ },
+ "Qwen3 32B": {
+  "path": "(remote) Qwen3-32B-Q4_K_M.gguf",
+  "extra": [],
+  "temperature": 3.526554584503174,
+  "acc": 0.9000839630562553,
+  "ece_raw": 0.07774649043055853,
+  "ece_cal": 0.024099032902502638,
+  "nll_raw": 0.6702072007779177,
+  "nll_cal": 0.32167113944214326,
+  "latency": {
+   "mean_ms": 411.6396474838257,
+   "median_ms": 353.4510135650635,
+   "n": 50
+  },
+  "remote": "http://mac.local:8086"
+ },
+ "Qwen3.6 35B A3B Q4_K_XL": {
+  "path": "(remote) Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 1.4648689031600952,
+  "acc": 0.9151973131821999,
+  "ece_raw": 0.04423380723599288,
+  "ece_cal": 0.027448905625033326,
+  "nll_raw": 0.3062530413578949,
+  "nll_cal": 0.2582632614717244,
+  "latency": {
+   "mean_ms": 100.94456672668457,
+   "median_ms": 94.27928924560547,
+   "n": 50
+  },
+  "remote": "http://mac.local:8087"
+ },
+ "Qwen3-VL 32B Instruct": {
+  "path": "(remote) Qwen3-VL-32B-Instruct-Q4_K_M.gguf",
+  "extra": [],
+  "temperature": 4.071869373321533,
+  "acc": 0.9042821158690176,
+  "ece_raw": 0.08341250497744845,
+  "ece_cal": 0.02560354663712039,
+  "nll_raw": 0.8249525260808518,
+  "nll_cal": 0.28778374090117737,
+  "latency": {
+   "mean_ms": 405.7873868942261,
+   "median_ms": 353.1684875488281,
+   "n": 50
+  },
+  "remote": "http://mac.local:8088"
+ }
+}
