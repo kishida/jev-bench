@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find the bug — live</title>
+<style>
+  :root { --bg:#f7f7f5; --panel:#fff; --text:#1d1d1b; --muted:#6b6b66; --border:#e2e1dc; --accent:#2f6fdb;
+          --soft:#dbe6fa; --grass:#eef1e8; --line:#c4c9bc; --bird:#3060c8; --rabbit:#8c8e8a;
+          --bug:#963028; --ok:#2e7d32; --danger:#b3261e;
+          --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161615; --panel:#1f1f1d; --text:#ecebe6; --muted:#9a9993;
+          --border:#34332f; --accent:#7aa7f5; --soft:#24324b; --grass:#23261f; --line:#3b4034;
+          --ok:#81c995; --danger:#f28b82; } }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; background:var(--bg); color:var(--text);
+         font:15px/1.6 system-ui,-apple-system,"Segoe UI","Hiragino Sans",sans-serif; }
+  main { max-width:1080px; margin:0 auto; padding:22px 16px 50px; }
+  .head { display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  h1 { font-size:20px; margin:0; }
+  .sub { color:var(--muted); font-size:14px; }
+  .tag { font-family:var(--mono); font-size:12px; padding:2px 8px; border-radius:10px;
+         background:var(--soft); color:var(--accent); }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--ok); margin-right:6px; }
+  .dot.off { background:var(--danger); }
+  section { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px; margin-top:14px; }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:0 0 10px; }
+  .stage { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:14px; align-items:start; }
+  .stage > section { margin-top:0; }
+  canvas { width:100%; height:auto; display:block; border-radius:6px; }
+  .bar-row { margin-bottom:8px; }
+  .bar-top { display:flex; justify-content:space-between; font-size:13px; }
+  .bar-track { height:11px; background:var(--soft); border-radius:4px; overflow:hidden; }
+  .bar-fill { display:block; height:100%; background:#9db8e8; transition:width .2s linear; }
+  .bug .bar-fill { background:var(--ok); }
+  .bug .bar-top b::after { content:" 虫"; color:var(--ok); font-weight:400; }
+  .chosen .bar-top { font-weight:600; }
+  .meta { font-family:var(--mono); font-size:12px; color:var(--muted); }
+  .big { display:flex; gap:22px; flex-wrap:wrap; margin-bottom:10px; }
+  .big div { min-width:76px; }
+  .big b { display:block; font-size:22px; font-family:var(--mono); line-height:1.2; }
+  .big span { font-size:12px; color:var(--muted); }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:13px; color:var(--muted); margin-top:8px; }
+  .sw { display:inline-block; width:12px; height:12px; border-radius:50%; vertical-align:-2px; margin-right:5px; }
+  ul.log { list-style:none; margin:0; padding:0; font-family:var(--mono); font-size:12px;
+           max-height:150px; overflow:auto; }
+  ul.log li { padding:2px 0; border-bottom:1px solid var(--border); color:var(--muted); }
+  ul.log li.hit { color:var(--ok); }
+  @media (max-width:820px) { .stage { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="head">
+    <h1>Find the bug — live</h1>
+    <div class="sub"><span class="dot" id="dot"></span><span id="conn">接続中…</span>
+      &nbsp;<span class="tag" id="model">-</span> <span class="tag" id="mode">-</span></div>
+  </div>
+  <p class="sub">鳥4羽・うさぎ4匹・虫3匹が動きまわる 8×6 の野原を、ときどき <code>/v1/systemone</code> に
+    「虫のいるマスは？」と聞いています。48マスすべてが選択肢なので、当てずっぽうなら 6.3%。
+    緑の枠が虫、青い枠がモデルの選んだマス、薄い青は確率の高いマスです。</p>
+
+  <div class="stage">
+    <section>
+      <h2>野原</h2>
+      <canvas id="c" width="800" height="600"></canvas>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--bird)"></span>鳥（くちばし）</span>
+        <span><span class="sw" style="background:var(--rabbit)"></span>うさぎ（長い耳）</span>
+        <span><span class="sw" style="background:var(--bug)"></span>虫（脚6本）</span>
+        <span id="status"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>モデルの判断</h2>
+      <div id="bars"><p class="meta">最初の判定を待っています…</p></div>
+      <div class="meta" id="pick"></div>
+    </section>
+  </div>
+
+  <section>
+    <h2>これまで</h2>
+    <div class="big">
+      <div><b id="s-rate">-</b><span>正解率</span></div>
+      <div><b id="s-asked">0</b><span>判定回数</span></div>
+      <div><b id="s-crea">-</b><span>何かがいるマス</span></div>
+      <div><b id="s-dist">-</b><span>虫までの距離</span></div>
+      <div><b id="s-ms">-</b><span>1回</span></div>
+    </div>
+    <ul class="log" id="log"></ul>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const COLS = 8, ROWS = 6;
+let cur = null, prev = null, tAt = 0, dur = 1200, answer = null, labelled = true;
+let step = 0;   // 盤面の重ね表示は、その判定が出た瞬間の盤面にだけ描く
+
+const cellName = (x, y) => "ABCDEFGH"[x] + (y + 1);
+
+function drawBird(ctx, cx, cy, u) {
+  ctx.fillStyle = css("--bird");
+  ctx.beginPath(); ctx.arc(cx, cy, u, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy - u, u * 0.66, 0, 7); ctx.fill();
+  ctx.fillStyle = "#e89628";
+  ctx.beginPath(); ctx.moveTo(cx + u * 0.6, cy - u * 1.2);
+  ctx.lineTo(cx + u * 1.5, cy - u * 0.9); ctx.lineTo(cx + u * 0.6, cy - u * 0.6);
+  ctx.closePath(); ctx.fill();
+}
+function drawRabbit(ctx, cx, cy, u) {
+  ctx.fillStyle = css("--rabbit");
+  ctx.beginPath(); ctx.arc(cx, cy + u * 0.3, u, 0, 7); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy - u * 0.5, u * 0.66, 0, 7); ctx.fill();
+  for (const sx of [-1, 1]) ctx.fillRect(cx + sx * u * 0.35 - u * 0.12, cy - u * 2, u * 0.24, u);
+  ctx.fillStyle = "#c8c8c4";
+  ctx.beginPath(); ctx.arc(cx + u, cy + u * 0.5, u * 0.25, 0, 7); ctx.fill();
+}
+function drawBug(ctx, cx, cy, u) {
+  ctx.strokeStyle = ctx.fillStyle = css("--bug");
+  ctx.lineWidth = Math.max(1, u * 0.14);
+  for (let k = 0; k < 3; k++) {
+    const y = cy - u * 0.5 + k * u * 0.5;
+    ctx.beginPath(); ctx.moveTo(cx - u * 2, y); ctx.lineTo(cx - u, y); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx + u, y); ctx.lineTo(cx + u * 2, y); ctx.stroke();
+  }
+  for (const sx of [-1, 1]) {
+    ctx.beginPath(); ctx.moveTo(cx + sx * u * 0.5, cy - u); ctx.lineTo(cx + sx * u * 0.5, cy - u * 2); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(cx, cy, u, 0, 7); ctx.fill();
+}
+
+function draw(now) {
+  const cv = $("c"), ctx = cv.getContext("2d");
+  const cell = cv.width / COLS;
+  ctx.fillStyle = css("--grass");
+  ctx.fillRect(0, 0, cv.width, cv.height);
+
+  const live = answer && answer.step === step;
+  if (live && answer.heat) {
+    for (const [name, p] of Object.entries(answer.heat)) {
+      const x = "ABCDEFGH".indexOf(name[0]), y = +name.slice(1) - 1;
+      ctx.fillStyle = `rgba(110,150,225,${Math.min(0.5, p * 0.9)})`;
+      ctx.fillRect(x * cell, y * cell, cell, cell);
+    }
+  }
+  ctx.strokeStyle = css("--line"); ctx.lineWidth = 1;
+  for (let i = 1; i < COLS; i++) { ctx.beginPath(); ctx.moveTo(i * cell, 0); ctx.lineTo(i * cell, cv.height); ctx.stroke(); }
+  for (let i = 1; i < ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i * cell); ctx.lineTo(cv.width, i * cell); ctx.stroke(); }
+  if (labelled) {
+    ctx.fillStyle = css("--muted"); ctx.font = `${Math.round(cell * 0.2)}px system-ui`;
+    ctx.textAlign = "left";
+    for (let y = 0; y < ROWS; y++)
+      for (let x = 0; x < COLS; x++) ctx.fillText(cellName(x, y), x * cell + 5, y * cell + cell * 0.24);
+  }
+
+  if (live) {
+    ctx.lineWidth = 3;
+    for (const b of answer.bugs) {
+      const x = "ABCDEFGH".indexOf(b[0]), y = +b.slice(1) - 1;
+      ctx.strokeStyle = css("--ok");
+      ctx.strokeRect(x * cell + 2, y * cell + 2, cell - 4, cell - 4);
+    }
+    const x = "ABCDEFGH".indexOf(answer.choice[0]), y = +answer.choice.slice(1) - 1;
+    ctx.strokeStyle = css("--accent");
+    ctx.strokeRect(x * cell + 6, y * cell + 6, cell - 12, cell - 12);
+  }
+
+  if (cur) {
+    const k = prev ? Math.min(1, (now - tAt) / dur) : 1;
+    const ease = k * k * (3 - 2 * k);
+    cur.forEach((c, i) => {
+      const p = (prev && prev[i] && prev[i][0] === c[0]) ? prev[i] : c;
+      const fx = p[1] + (c[1] - p[1]) * ease, fy = p[2] + (c[2] - p[2]) * ease;
+      const cx = (fx + 0.5) * cell, cy = (fy + 0.5) * cell, u = cell * 0.2;
+      if (c[0] === "bird") drawBird(ctx, cx, cy, u);
+      else if (c[0] === "rabbit") drawRabbit(ctx, cx, cy, u);
+      else drawBug(ctx, cx, cy, u);
+    });
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+function renderAnswer(f) {
+  answer = f;
+  const bars = $("bars");
+  bars.innerHTML = f.top.map(([name, p]) => {
+    const isBug = f.bugs.includes(name);
+    return `<div class="bar-row${isBug ? " bug" : ""}${name === f.choice ? " chosen" : ""}">`
+      + `<div class="bar-top"><b>${name}</b><span>${(p * 100).toFixed(1)}%</span></div>`
+      + `<div class="bar-track"><span class="bar-fill" style="width:${(p * 100).toFixed(1)}%"></span></div></div>`;
+  }).join("");
+  $("pick").textContent = `選んだマス: ${f.choice}（${f.hit ? "虫がいた" : `虫まで ${f.distance} マス`}）`
+    + ` / confidence ${f.confidence.toFixed(3)} / ${f.ms} ms`;
+  const s = f.stats;
+  $("s-rate").textContent = `${(100 * s.hit / s.asked).toFixed(0)}%`;
+  $("s-asked").textContent = s.asked;
+  $("s-crea").textContent = `${(100 * s.on_creature / s.asked).toFixed(0)}%`;
+  $("s-dist").textContent = (s.dist / s.asked).toFixed(2);
+  $("s-ms").textContent = `${f.ms} ms`;
+  const li = document.createElement("li");
+  li.className = f.hit ? "hit" : "";
+  li.textContent = `step ${f.step}: ${f.choice} ${f.hit ? "HIT" : "miss"} (虫 ${f.bugs.join(" ")})`;
+  $("log").prepend(li);
+  while ($("log").children.length > 50) $("log").lastChild.remove();
+}
+
+function connect() {
+  const es = new EventSource("events");
+  es.onopen = () => { $("conn").textContent = "接続中"; $("dot").classList.remove("off"); };
+  es.onerror = () => { $("conn").textContent = "切断 — 再接続します"; $("dot").classList.add("off"); };
+  es.onmessage = (e) => {
+    const f = JSON.parse(e.data);
+    if (f.type === "error") { $("conn").textContent = "モデルサーバーの応答なし"; $("dot").classList.add("off"); return; }
+    $("conn").textContent = "接続中"; $("dot").classList.remove("off");
+    if (f.type === "tick") {
+      prev = cur; cur = f.creatures; step = f.step; tAt = performance.now(); dur = (f.seconds || 1.2) * 1000;
+      $("model").textContent = f.model;
+      labelled = f.mode === "image_labeled";
+      $("mode").textContent = f.mode === "text" ? "AA" : (labelled ? "画像・マス名あり" : "画像・マス名なし");
+      $("status").textContent = `ステップ ${f.step}`;
+    } else if (f.type === "answer") {
+      renderAnswer(f);
+    }
+  };
+}
+connect();
+</script>
+</body>
+</html>
