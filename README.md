@@ -46,6 +46,9 @@ python demo/snake/play.py --mode image --games 10 --url http://127.0.0.1:8080   
 python demo/maze/play.py  --mode text --labels --coords --cells 5 --games 5 --url ...
 ```
 
+[docs/snake.md](docs/snake.md) has the full Snake results and explains why the coordinate-free
+condition is the one to compare on.
+
 `demo/snake` and `demo/maze` both write a full trace to `results/`, replayable in `replay.html`, and
 both have a `live.py` that plays forever and streams the board to a browser over SSE.
 `demo/extract` is a different shape again: finding the span of a document that matches a condition.
@@ -62,8 +65,11 @@ than the picture, `--board space|table|json|markdown|…` changes how the grid i
 - **Check the assistant prefix before judging a model.** A harmony-style model whose label is not
   the first generated token scores like guessing until the prefix is handled — gpt-oss goes from
   0.268 to 0.840.
-- **A picture can beat the text.** With the coordinate hints removed so both carry the same
-  information, the image version of Snake beats the ASCII one on the models that can see at all.
+- **Hints change what is being measured.** Telling the model where the head and the apple are lets
+  it subtract two coordinates instead of reading the board, and Qwen3.8 27B goes from 0 apples to
+  4.7. Compare board formats with the hints off, or the comparison measures nothing.
+- **A picture beats the text once the hints are off.** Five of six models score highest on the image.
+  Qwen3.6 35B A3B manages 0.0 from characters and 3.7 from a picture of the same board.
 - **Direction bias is the real failure in the maze.** Aggregate "legal move" rates look respectable
   because a model that walks back and forth in a corridor scores 100% on them. Every model tested so
   far emits only two of the four directions; which two differs per model.
@@ -71,6 +77,7 @@ than the picture, `--board space|table|json|markdown|…` changes how the grid i
 ## Layout
 
 ```text
+docs/snake.md        what the Snake numbers mean, and how the conditions differ
 eval.py              the classification benchmark, standalone
 bench_models.py      run it over a list of local GGUFs
 eval_systemone.py    the older evaluator (needs the training project)
