@@ -41,10 +41,13 @@ Per-step decisions instead of one-shot questions: at every turn the board is sen
 few hundred classifications.
 
 ```bash
-python demo/snake/play.py --mode text  --games 10 --url http://127.0.0.1:8080
-python demo/snake/play.py --mode image --games 10 --url http://127.0.0.1:8080   # needs --mmproj
+python demo/snake/play.py --mode text --minimal --games 10 --url http://127.0.0.1:8080
+python demo/snake/play.py --mode image --games 10 --url http://127.0.0.1:8080    # needs --mmproj
 python demo/maze/play.py  --mode text --labels --coords --cells 5 --games 5 --url ...
 ```
+
+`--minimal` is on in the first line for a reason: without it the state also carries the head and
+apple coordinates, and the model can answer without reading the board at all.
 
 [docs/snake.md](docs/snake.md) has the full Snake results and explains why the coordinate-free
 condition is the one to compare on.
@@ -71,8 +74,10 @@ than the picture, `--board space|table|json|markdown|…` changes how the grid i
 - **A picture beats the text once the hints are off.** Five of six models score highest on the image.
   Qwen3.6 35B A3B manages 0.0 from characters and 3.7 from a picture of the same board.
 - **Direction bias is the real failure in the maze.** Aggregate "legal move" rates look respectable
-  because a model that walks back and forth in a corridor scores 100% on them. Every model tested so
-  far emits only two of the four directions; which two differs per model.
+  because a model pacing up and down a corridor scores 100% on them. Almost every model emits only
+  two of the four directions — Qwen3 32B played 352 moves without once choosing left or right — and
+  which two differs per model. Gemma 4 31B is the first to use all four, and the only one to reach
+  the goal.
 
 ## Layout
 
