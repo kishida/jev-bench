@@ -59,7 +59,7 @@
   </div>
   <p class="sub">鳥4羽・うさぎ4匹・虫3匹が動きまわる 8×6 の野原を、ときどき <code>/v1/systemone</code> に
     「虫のいるマスは？」と聞いています。48マスすべてが選択肢なので、当てずっぽうなら 6.3%。
-    緑の枠が虫、青い枠がモデルの選んだマス、薄い青は確率の高いマスです。</p>
+    枠がモデルの選んだマスで、虫に当たっていれば緑、外れていれば青。薄い青は確率の高いマスです。</p>
 
   <div class="stage">
     <section>
@@ -69,6 +69,7 @@
         <span><span class="sw" style="background:var(--bird)"></span>鳥（くちばし）</span>
         <span><span class="sw" style="background:var(--rabbit)"></span>うさぎ（長い耳）</span>
         <span><span class="sw" style="background:var(--bug)"></span>虫（脚6本）</span>
+        <span>枠 = モデルの答え（<span style="color:var(--ok)">当たり</span> / <span style="color:var(--accent)">外れ</span>）</span>
         <span id="status"></span>
       </div>
     </section>
@@ -139,7 +140,8 @@ function draw(now) {
   ctx.fillStyle = css("--grass");
   ctx.fillRect(0, 0, cv.width, cv.height);
 
-  const live = answer && answer.step === step;
+  // 動いている最中ではなく、移動が終わってから結果を重ねる
+  const live = answer && answer.step === step && (now - tAt) >= dur;
   if (live && answer.heat) {
     for (const [name, p] of Object.entries(answer.heat)) {
       const x = "ABCDEFGH".indexOf(name[0]), y = +name.slice(1) - 1;
@@ -158,15 +160,10 @@ function draw(now) {
   }
 
   if (live) {
-    ctx.lineWidth = 3;
-    for (const b of answer.bugs) {
-      const x = "ABCDEFGH".indexOf(b[0]), y = +b.slice(1) - 1;
-      ctx.strokeStyle = css("--ok");
-      ctx.strokeRect(x * cell + 2, y * cell + 2, cell - 4, cell - 4);
-    }
     const x = "ABCDEFGH".indexOf(answer.choice[0]), y = +answer.choice.slice(1) - 1;
-    ctx.strokeStyle = css("--accent");
-    ctx.strokeRect(x * cell + 6, y * cell + 6, cell - 12, cell - 12);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = answer.hit ? css("--ok") : css("--accent");
+    ctx.strokeRect(x * cell + 4, y * cell + 4, cell - 8, cell - 8);
   }
 
   if (cur) {
