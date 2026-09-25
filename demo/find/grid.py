@@ -110,11 +110,13 @@ class Scene:
             f"There are {self._census()}."
         )
 
-    def image_state(self, labelled):
-        where = ("Each cell has its name printed in its top-left corner."
-                 if labelled else
-                 "The columns are A to H from left to right and the rows are 1 to 6 from top to "
-                 "bottom, so the top-left cell is A1 and the bottom-right cell is H6.")
+    def image_state(self, labels="none"):
+        where = {
+            "cells": "Each cell has its name printed in its top-left corner.",
+            "axis": "The column letters are printed above the grid and the row numbers to its left.",
+            "none": ("The columns are A to H from left to right and the rows are 1 to 6 from top "
+                     "to bottom, so the top-left cell is A1 and the bottom-right cell is H6."),
+        }[labels]
         return (
             "The picture shows a field seen from above, divided into 8 columns by 6 rows.\n"
             "The birds are blue and have a pointed beak, the rabbits are grey with two long ears, "
@@ -124,10 +126,15 @@ class Scene:
         )
 
     # ------------------------------------------------------------ 画像
-    def png(self, cell=64, labelled=False, offsets=None):
+    def png(self, cell=64, labels="none", offsets=None):
+        """labels:
+          "cells" 各マスの左上にマス名を書く
+          "axis"  盤の外（上と左）に列の文字と行の数字を振る。マス目自体は素のまま
+          "none"  何も書かない
+        offsets は個体ごとの実数マス単位のずれ（ライブ表示用）。"""
         offsets = offsets if offsets is not None else getattr(self, "offsets", None)
-        """offsets は {(kind, index): (dx, dy)} の実数マス単位のずれ（ライブ表示用）。"""
-        w, h = COLS * cell, ROWS * cell
+        pad = cell // 2 if labels == "axis" else 0
+        w, h = COLS * cell + pad, ROWS * cell + pad
         grass = (238, 241, 232)
         line = (196, 201, 188)
         label = (150, 155, 143)
@@ -144,20 +151,32 @@ class Scene:
                 half = int((r * r - dy * dy) ** 0.5)
                 fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, c)
 
+        if pad:
+            fill(0, 0, w, h, (247, 248, 243))
+            fill(pad, pad, w, h, grass)
         for i in range(1, COLS):
-            fill(i * cell - 1, 0, i * cell + 1, h, line)
+            fill(pad + i * cell - 1, pad, pad + i * cell + 1, h, line)
         for i in range(1, ROWS):
-            fill(0, i * cell - 1, w, i * cell + 1, line)
+            fill(pad, pad + i * cell - 1, w, pad + i * cell + 1, line)
+        if pad:
+            fill(pad - 1, pad, pad + 1, h, line)
+            fill(pad, pad - 1, w, pad + 1, line)
 
-        if labelled:
+        if labels == "cells":
             for y in range(ROWS):
                 for x in range(COLS):
                     _text(fill, x * cell + 5, y * cell + 5, cell_name(x, y), label)
+        elif labels == "axis":
+            axis = (110, 114, 104)
+            for x in range(COLS):
+                _text(fill, pad + x * cell + cell // 2 - 6, pad // 2 - 7, COL_NAMES[x], axis)
+            for y in range(ROWS):
+                _text(fill, pad // 2 - 6, pad + y * cell + cell // 2 - 7, str(y + 1), axis)
 
         for idx, (kind, x, y) in enumerate(self.creatures):
             dx, dy = (offsets or {}).get(idx, (0.0, 0.0))
-            cx = int((x + dx + 0.5) * cell)
-            cy = int((y + dy + 0.5) * cell)
+            cx = pad + int((x + dx + 0.5) * cell)
+            cy = pad + int((y + dy + 0.5) * cell)
             if kind == BIRD:
                 _bird(fill, disc, cx, cy, cell)
             elif kind == RABBIT:
@@ -176,9 +195,9 @@ class Scene:
                 + chunk(b"IDAT", zlib.compress(raw, 6))
                 + chunk(b"IEND", b""))
 
-    def data_url(self, cell=64, labelled=False, offsets=None):
+    def data_url(self, cell=64, labels="none", offsets=None):
         return ("data:image/png;base64,"
-                + base64.b64encode(self.png(cell, labelled, offsets)).decode())
+                + base64.b64encode(self.png(cell, labels, offsets)).decode())
 
 
 # ---------------------------------------------------------------- 生き物の絵

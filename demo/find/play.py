@@ -20,19 +20,21 @@ from grid import Scene, all_cells  # noqa: E402
 
 BENCH = Path(__file__).resolve().parents[2]
 INSTRUCTIONS = "Which cell contains a bug?"
+# 画像に何を書き込むか。axis は盤の外に列の文字と行の数字を振る（表計算の見出しと同じ）。
+IMAGE_LABELS = {"image_labeled": "cells", "image_axis": "axis", "image": "none"}
 
 
 
 def ask(session, url, scene, mode, api_key=None, timeout=600, assistant_prefix=None):
+    labels = IMAGE_LABELS.get(mode, "none")
     body = {
         "model": "jev-latest",
-        "state": (scene.text_state() if mode == "text"
-                  else scene.image_state(labelled=(mode == "image_labeled"))),
+        "state": scene.text_state() if mode == "text" else scene.image_state(labels),
         "questions": {"cell": {"type": "choice", "instructions": INSTRUCTIONS,
                                "criteria": {c: None for c in all_cells()}}},
     }
     if mode != "text":
-        body["images"] = [scene.data_url(labelled=(mode == "image_labeled"))]
+        body["images"] = [scene.data_url(labels=labels)]
     if assistant_prefix:
         body["options"] = {"assistant_prefix": assistant_prefix}
     headers = {"authorization": f"Bearer {api_key}"} if api_key else None
@@ -44,7 +46,7 @@ def ask(session, url, scene, mode, api_key=None, timeout=600, assistant_prefix=N
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--mode", default="text", choices=["text", "image", "image_labeled", "random"])
+    ap.add_argument("--mode", default="text", choices=["text", "image_labeled", "image_axis", "image", "random"])
     ap.add_argument("--url", default="http://127.0.0.1:18160")
     ap.add_argument("--api-key")
     ap.add_argument("--trials", type=int, default=20)

@@ -232,7 +232,7 @@ def main():
     ap.add_argument("--url", default="http://127.0.0.1:18160")
     ap.add_argument("--api-key")
     ap.add_argument("--mode", default="image_labeled",
-                    choices=["image_labeled", "image", "text"])
+                    choices=["image_labeled", "image_axis", "image", "text"])
     ap.add_argument("--port", type=int, default=8802)
     ap.add_argument("--interval", type=float, default=1.2, help="1ステップの秒数")
     ap.add_argument("--every", type=int, default=1, help="何ステップごとに聞くか")
