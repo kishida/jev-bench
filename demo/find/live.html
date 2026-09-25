@@ -172,8 +172,11 @@ function draw(now) {
   if (cur) {
     const k = prev ? Math.min(1, (now - tAt) / dur) : 1;
     const ease = k * k * (3 - 2 * k);
-    cur.forEach((c, i) => {
-      const p = (prev && prev[i] && prev[i][0] === c[0]) ? prev[i] : c;
+    // 同じ個体どうしを id で結ぶ。添字で結ぶと、虫を1匹取り除いた瞬間に
+    // 後ろの個体がずれて、盤面を飛び越えるように見えてしまう。
+    const was = new Map((prev || []).map((c) => [c[3], c]));
+    cur.forEach((c) => {
+      const p = was.get(c[3]) || c;
       const fx = p[1] + (c[1] - p[1]) * ease, fy = p[2] + (c[2] - p[2]) * ease;
       const cx = (fx + 0.5) * cell, cy = (fy + 0.5) * cell, u = cell * 0.2;
       if (c[0] === "bird") drawBird(ctx, cx, cy, u);

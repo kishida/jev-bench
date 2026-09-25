@@ -72,16 +72,23 @@ class Field:
         spots = [(x, y) for y in range(ROWS) for x in range(COLS)]
         self.rng.shuffle(spots)
         self.items = []
+        self.next_id = 0
         i = 0
         for kind, n in COUNTS.items():
             for _ in range(n):
                 x, y = spots[i]
                 i += 1
-                self.items.append([kind, float(x), float(y)])
+                self._add(kind, x, y)
+
+    def _add(self, kind, x, y):
+        """生き物には固定の id を振る。捕獲や補充でリストの並びが変わっても、
+        ブラウザ側が同じ個体どうしを結んで補間できるようにするため。"""
+        self.items.append([kind, float(x), float(y), self.next_id])
+        self.next_id += 1
 
     def step(self):
         taken = {(round(c[1]), round(c[2])) for c in self.items}
-        for c in self.items:
+        for c in self.items:  # noqa: B007
             x, y = round(c[1]), round(c[2])
             moves = [(x + dx, y + dy) for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0))
                      if 0 <= x + dx < COLS and 0 <= y + dy < ROWS and (x + dx, y + dy) not in taken]
@@ -92,7 +99,7 @@ class Field:
                 c[1], c[2] = float(nx), float(ny)
 
     def positions(self):
-        return [(k, x, y) for k, x, y in self.items]
+        return [(k, x, y, i) for k, x, y, i in self.items]
 
     def free_spots(self, n):
         taken = {(round(c[1]), round(c[2])) for c in self.items}
@@ -114,7 +121,7 @@ class Field:
     def restock(self):
         """虫がいなくなったら、また COUNTS 匹だけ空きマスに放つ。"""
         for x, y in self.free_spots(COUNTS[BUG]):
-            self.items.append([BUG, float(x), float(y)])
+            self._add(BUG, x, y)
 
 
 def runner(args, hub, stop):
@@ -134,10 +141,10 @@ def runner(args, hub, stop):
         positions = field.positions()
         hub.publish({"type": "tick", "model": model, "mode": args.mode, "step": n,
                      "cols": COLS, "rows": ROWS, "seconds": args.interval,
-                     "creatures": [[k, x, y] for k, x, y in positions]})
+                     "creatures": [[k, x, y, i] for k, x, y, i in positions]})
 
         if n % args.every == 0:
-            scene = Scene.from_positions(positions)
+            scene = Scene.from_positions([(k, x, y) for k, x, y, _ in positions])
             t0 = time.time()
             try:
                 choice, probs, conf = ask(session, args.url, scene, args.mode, args.api_key,
