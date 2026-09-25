@@ -463,5 +463,21 @@
    "n": 50
   },
   "remote": "http://mac.local:8089"
+ },
+ "Gemma 4 26B A4B it qat UD-Q4_K_XL": {
+  "path": "(remote) gemma-4-26B-A4B-it-qat-UD-Q4_K_XL.gguf",
+  "extra": [],
+  "temperature": 2.4928572177886963,
+  "acc": 0.9126784214945424,
+  "ece_raw": 0.058481532550426284,
+  "ece_cal": 0.016252510329106757,
+  "nll_raw": 0.43360437693670195,
+  "nll_cal": 0.27186497152218353,
+  "latency": {
+   "mean_ms": 91.95695400238037,
+   "median_ms": 87.127685546875,
+   "n": 50
+  },
+  "remote": "http://mac.local:8090"
  }
 }
