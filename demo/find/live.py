@@ -1,5 +1,7 @@
 """鳥・うさぎ・虫がなめらかに動く野原を見せ、ときどき「虫のいるマスは？」とモデルに聞くデモ。
 
+当てたらその虫は取り除く。いなくなったらまた3匹放つので、何手で3匹捕まえられるかを見ていられる。
+
 生き物は1ステップごとに隣のマスへ動き、ブラウザ側がその間を補間してなめらかに見せる。
 数ステップに1回、その瞬間の盤面を PNG にしてモデルに投げ、返ってきた確率を重ねて表示する。
 
@@ -21,8 +23,8 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from grid import COLS, COUNTS, ROWS, Scene, all_cells, cell_name  # noqa: E402
-from play import INSTRUCTIONS, ask  # noqa: E402
+from grid import BUG, COLS, COUNTS, ROWS, Scene  # noqa: E402
+from play import ask  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 
@@ -32,7 +34,8 @@ class Hub:
         self.clients = []
         self.lock = threading.Lock()
         self.last = None
-        self.stats = {"asked": 0, "hit": 0, "on_creature": 0, "dist": 0.0}
+        self.stats = {"asked": 0, "hit": 0, "on_creature": 0, "dist": 0.0,
+                      "caught": 0, "rounds": 1}
 
     def publish(self, event):
         with self.lock:
@@ -91,6 +94,28 @@ class Field:
     def positions(self):
         return [(k, x, y) for k, x, y in self.items]
 
+    def free_spots(self, n):
+        taken = {(round(c[1]), round(c[2])) for c in self.items}
+        spots = [(x, y) for y in range(ROWS) for x in range(COLS) if (x, y) not in taken]
+        self.rng.shuffle(spots)
+        return spots[:n]
+
+    def catch(self, x, y):
+        """そのマスにいる虫を取り除く。取れたら True。"""
+        for i, c in enumerate(self.items):
+            if c[0] == BUG and (round(c[1]), round(c[2])) == (x, y):
+                self.items.pop(i)
+                return True
+        return False
+
+    def bugs_left(self):
+        return sum(1 for c in self.items if c[0] == BUG)
+
+    def restock(self):
+        """虫がいなくなったら、また COUNTS 匹だけ空きマスに放つ。"""
+        for x, y in self.free_spots(COUNTS[BUG]):
+            self.items.append([BUG, float(x), float(y)])
+
 
 def runner(args, hub, stop):
     session = requests.Session()
@@ -129,11 +154,23 @@ def runner(args, hub, stop):
             s["hit"] += hit
             s["on_creature"] += choice in scene.occupied_cells()
             s["dist"] += scene.distance_to_bug(choice)
+            caught = False
+            if hit:
+                cx, cy = "ABCDEFGH".index(choice[0]), int(choice[1:]) - 1
+                caught = field.catch(cx, cy)
+                s["caught"] += caught
+            restocked = False
+            if field.bugs_left() == 0:
+                field.restock()
+                s["rounds"] += 1
+                restocked = True
             top = sorted(((v, k) for k, v in probs.items()), reverse=True)[:6]
             hub.publish({"type": "answer", "model": model, "mode": args.mode, "step": n,
                          "choice": choice, "hit": hit, "bugs": bugs,
                          "distance": scene.distance_to_bug(choice),
                          "confidence": round(conf, 4), "ms": round(ms),
+                         "caught": caught, "restocked": restocked,
+                         "bugs_left": field.bugs_left(),
                          "top": [[k, round(v, 4)] for v, k in top],
                          "heat": {k: round(v, 4) for k, v in probs.items() if v >= 0.01},
                          "stats": dict(s)})

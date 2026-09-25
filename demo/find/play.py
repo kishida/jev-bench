@@ -1,7 +1,7 @@
 """「虫のいるマスはどれ？」を /v1/systemone に聞いて、当たる割合を測る。
 
-8×6 の 48 マスを選択肢にして、1回の推論で 48 個の確率を受け取る。虫は3匹いるので、
-当てずっぽうなら 3/48 = 6.25%。
+8×6 の 48 マスを選択肢にして、1回の推論で 48 個の確率を受け取る。虫が1匹なら
+当てずっぽうは 1/48 = 2.1%、3匹なら 6.25%。
 
   python demo/find/play.py --mode text          --trials 20 --url http://127.0.0.1:18160
   python demo/find/play.py --mode image_labeled --trials 20 --url ...   # 要 --mmproj
@@ -16,11 +16,11 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from grid import COUNTS, Scene, all_cells  # noqa: E402
+from grid import Scene, all_cells  # noqa: E402
 
 BENCH = Path(__file__).resolve().parents[2]
 INSTRUCTIONS = "Which cell contains a bug?"
-CHANCE = COUNTS["bug"] / 48
+
 
 
 def ask(session, url, scene, mode, api_key=None, timeout=600, assistant_prefix=None):
@@ -48,6 +48,7 @@ def main():
     ap.add_argument("--url", default="http://127.0.0.1:18160")
     ap.add_argument("--api-key")
     ap.add_argument("--trials", type=int, default=20)
+    ap.add_argument("--bugs", type=int, default=3, help="虫の数（当てずっぽうは bugs/48）")
     ap.add_argument("--assistant-prefix")
     ap.add_argument("--seed0", type=int, default=0)
     ap.add_argument("--tag")
@@ -57,7 +58,7 @@ def main():
     session = requests.Session()
     rows, lat = [], []
     for i in range(a.trials):
-        scene = Scene(seed=a.seed0 + i)
+        scene = Scene(seed=a.seed0 + i, bugs=a.bugs)
         if a.mode == "random":
             choice, probs, conf = scene.rng.choice(all_cells()), {}, 0.0
         else:
@@ -80,7 +81,7 @@ def main():
 
     n = len(rows)
     summary = {
-        "mode": a.mode, "trials": n, "chance": CHANCE,
+        "mode": a.mode, "trials": n, "bugs": a.bugs, "chance": a.bugs / 48,
         "hit_rate": sum(r["hit"] for r in rows) / n,
         "on_creature_rate": sum(r["on_creature"] for r in rows) / n,
         "mean_distance": sum(r["distance"] for r in rows) / n,

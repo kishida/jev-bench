@@ -59,7 +59,8 @@
   </div>
   <p class="sub">鳥4羽・うさぎ4匹・虫3匹が動きまわる 8×6 の野原を、ときどき <code>/v1/systemone</code> に
     「虫のいるマスは？」と聞いています。48マスすべてが選択肢なので、当てずっぽうなら 6.3%。
-    枠がモデルの選んだマスで、虫に当たっていれば緑、外れていれば青。薄い青は確率の高いマスです。</p>
+    枠がモデルの選んだマスで、虫に当たっていれば緑、外れていれば青。薄い青は確率の高いマスです。
+    当てた虫は取り除かれ、3匹ともいなくなるとまた3匹放たれます。</p>
 
   <div class="stage">
     <section>
@@ -84,6 +85,8 @@
   <section>
     <h2>これまで</h2>
     <div class="big">
+      <div><b id="s-caught">0</b><span>捕まえた虫</span></div>
+      <div><b id="s-left">-</b><span>残りの虫</span></div>
       <div><b id="s-rate">-</b><span>正解率</span></div>
       <div><b id="s-asked">0</b><span>判定回数</span></div>
       <div><b id="s-crea">-</b><span>何かがいるマス</span></div>
@@ -194,6 +197,8 @@ function renderAnswer(f) {
   $("pick").textContent = `選んだマス: ${f.choice}（${f.hit ? "虫がいた" : `虫まで ${f.distance} マス`}）`
     + ` / confidence ${f.confidence.toFixed(3)} / ${f.ms} ms`;
   const s = f.stats;
+  $("s-caught").textContent = s.caught;
+  $("s-left").textContent = f.bugs_left;
   $("s-rate").textContent = `${(100 * s.hit / s.asked).toFixed(0)}%`;
   $("s-asked").textContent = s.asked;
   $("s-crea").textContent = `${(100 * s.on_creature / s.asked).toFixed(0)}%`;
@@ -201,7 +206,8 @@ function renderAnswer(f) {
   $("s-ms").textContent = `${f.ms} ms`;
   const li = document.createElement("li");
   li.className = f.hit ? "hit" : "";
-  li.textContent = `step ${f.step}: ${f.choice} ${f.hit ? "HIT" : "miss"} (虫 ${f.bugs.join(" ")})`;
+  li.textContent = `step ${f.step}: ${f.choice} ${f.hit ? "つかまえた" : "はずれ"}`
+    + (f.restocked ? `  — 全部つかまえた。${s.rounds} 回目の3匹を放ちます` : ` (残り ${f.bugs_left})`);
   $("log").prepend(li);
   while ($("log").children.length > 50) $("log").lastChild.remove();
 }

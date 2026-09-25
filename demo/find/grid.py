@@ -32,16 +32,19 @@ def all_cells():
 class Scene:
     """どのマスに何がいるか。left-top が a1、x は右、y は下。"""
 
-    def __init__(self, seed=0, rng=None):
+    def __init__(self, seed=0, rng=None, bugs=None):
         self.rng = rng or random.Random(seed)
         self.creatures = []          # [(kind, x, y), ...]
-        self._place()
+        self._place(bugs)
 
-    def _place(self):
+    def _place(self, bugs=None):
+        counts = dict(COUNTS)
+        if bugs is not None:
+            counts[BUG] = bugs
         spots = [(x, y) for y in range(ROWS) for x in range(COLS)]
         self.rng.shuffle(spots)
         i = 0
-        for kind, n in COUNTS.items():
+        for kind, n in counts.items():
             for _ in range(n):
                 x, y = spots[i]
                 i += 1
@@ -81,6 +84,13 @@ class Scene:
         return min(max(abs(x - bx), abs(y - by))
                    for kind, bx, by in self.creatures if kind == BUG)
 
+    def _census(self):
+        n = {k: sum(1 for c, _, _ in self.creatures if c == k) for k in (BIRD, RABBIT, BUG)}
+        parts = [f"{n[BIRD]} bird{'s' if n[BIRD] != 1 else ''}",
+                 f"{n[RABBIT]} rabbit{'s' if n[RABBIT] != 1 else ''}",
+                 f"{n[BUG]} bug{'s' if n[BUG] != 1 else ''}"]
+        return ", ".join(parts[:-1]) + " and " + parts[-1]
+
     # ------------------------------------------------------------ AA
     def ascii_board(self):
         head = "   " + " ".join(COL_NAMES)
@@ -97,7 +107,7 @@ class Scene:
             "B = a bird, R = a rabbit, X = a bug, . = empty grass.\n"
             "A cell is named by its column letter followed by its row number, for example H3 is "
             "the cell in column H, row 3.\n"
-            "There are 4 birds, 4 rabbits and 3 bugs."
+            f"There are {self._census()}."
         )
 
     def image_state(self, labelled):
@@ -110,7 +120,7 @@ class Scene:
             "The birds are blue and have a pointed beak, the rabbits are grey with two long ears, "
             "and the bugs are dark red, round, with six legs and two antennae.\n"
             f"{where}\n"
-            "There are 4 birds, 4 rabbits and 3 bugs."
+            f"There are {self._census()}."
         )
 
     # ------------------------------------------------------------ 画像
